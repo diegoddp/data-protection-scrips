@@ -1,4 +1,4 @@
-# 🛠PowerShell Automation Scripts for CI/CD Pipelines
+# 🛠Data Leak Protection
 
 This repository contains PowerShell scripts designed to improve automation and enforce best practices in DevOps workflows. These tools are especially useful for WordPress deployments and ensuring that SQL database exports are clean and compliant.
 
