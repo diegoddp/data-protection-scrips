@@ -1,0 +1,54 @@
+    - powershell: |
+        # Define the path to the directory containing your .sql files
+        $DbFile = Join-Path -Path $(System.DefaultWorkingDirectory) -ChildPath "db"
+        
+        # Regular expression pattern to match email addresses
+        $emailPattern = "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}"
+        
+        # Known image extensions
+        $imageExtensions = @(".webp", ".png", ".jpg", ".jpeg")  # Add more as needed
+        
+        # Get a list of .sql files in the specified directory
+        $sqlFiles = Get-ChildItem -Path $DbFile -Filter "*.sql" -File
+        
+        # Initialize an array to store unauthorized email addresses
+        $unauthorizedEmails = @()
+        
+        foreach ($file in $sqlFiles) {
+            try {
+                # Read the content of the file
+                $fileContent = Get-Content -Path $file.FullName -Raw
+        
+                # Search for email addresses
+                $matches = [regex]::Matches($fileContent, $emailPattern)
+        
+                if ($matches.Count -gt 0) {
+                    foreach ($match in $matches) {
+                        $email = $match.Value.ToLower()  # Convert to lowercase
+                        $endsWithImageExtension = $imageExtensions | Where-Object { $email.EndsWith($_) }
+        
+                        if (-not $endsWithImageExtension -and $email -notin @("user@example.com", "user2@example.com", user3@example.com)) {
+                            $unauthorizedEmails += $email
+                        }
+                    }
+                }
+            } catch {
+                Write-Host "Error reading $($file.Name): $_"
+                # Let's also fail the pipeline if there's an error
+                throw "Pipeline failed due to an error reading $($file.Name): $_"
+            }
+        }
+        
+        # Print unauthorized email addresses
+        if ($unauthorizedEmails.Count -gt 0) {
+            Write-Host "Unauthorized email addresses found:"
+            foreach ($unauthEmail in $unauthorizedEmails) {
+                Write-Host "  - $unauthEmail"
+            }
+            # Fail the pipeline explicitly
+            throw "Pipeline failed due to unauthorized email addresses."
+        } else {
+            Write-Host "No unauthorized email addresses found."
+        }
+        
+      displayName: 'Detect PII Data'
